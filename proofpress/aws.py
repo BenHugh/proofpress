@@ -197,6 +197,14 @@ def find_zone(sess, domain):
     return best
 
 
+SECOND_LEVEL = {"co", "com", "net", "org", "ac", "gov", "ne", "or", "edu"}
+
+
+def looks_apex(domain):
+    labels = domain.split(".")
+    return len(labels) == 2 or (len(labels) == 3 and labels[1] in SECOND_LEVEL and len(labels[2]) == 2)
+
+
 def check_domain(project, domain, settings=None):
     domain = normalize_domain(domain)
     sess = session(project, settings)
@@ -204,7 +212,8 @@ def check_domain(project, domain, settings=None):
         zone = find_zone(sess, domain)
     except Exception as e:
         raise AwsError(_explain(e))
-    return {"domain": domain, "zone": zone, "aliases": plan_aliases(domain, zone)}
+    return {"domain": domain, "zone": zone, "aliases": plan_aliases(domain, zone),
+            "apex_warning": (not zone) and looks_apex(domain)}
 
 
 def plan_aliases(domain, zone):
@@ -317,7 +326,11 @@ class Provisioner:
         self.st["aliases"] = plan_aliases(self.domain, zone)
         if zone:
             return f"Route 53 hosts {zone['name']}: DNS will be configured automatically"
-        return "DNS isn't in Route 53: you'll be shown 2-3 records to add at your DNS provider"
+        note = "DNS isn't in Route 53: you'll be shown 2-3 records to add at your DNS provider"
+        if looks_apex(self.domain):
+            note += (". This is a bare domain: your DNS provider must support ALIAS/ANAME or CNAME flattening at the root, "
+                     "otherwise use www." + self.domain + " as the site domain")
+        return note
 
     def step_bucket(self):
         s3 = self.client("s3")
@@ -325,20 +338,35 @@ class Provisioner:
             base = f"pp-{slug_for(self.domain)}"[:55].rstrip("-")
             self.st["bucket"] = f"{base}-{self.st['account'][-6:]}"
         b = self.st["bucket"]
+        exists = False
         try:
             s3.head_bucket(Bucket=b)
-            return f"{b} (already exists)"
+            exists = True
         except Exception as e:
             if "403" in str(e) or "Forbidden" in str(e):
                 raise AwsError(f"bucket {b} exists but belongs to someone else")
-        kw = {"Bucket": b}
-        if self.st["region"] != "us-east-1":
-            kw["CreateBucketConfiguration"] = {"LocationConstraint": self.st["region"]}
-        s3.create_bucket(**kw)
+        if exists:
+            # The bucket may be in another region than the one picked now (e.g. after a reset):
+            # the CloudFront origin must use the bucket's real region.
+            loc = s3.get_bucket_location(Bucket=b).get("LocationConstraint") or "us-east-1"
+            if loc == "EU":
+                loc = "eu-west-1"
+            note = f"{b} (already exists"
+            if loc != self.st["region"]:
+                note += f"; it lives in {loc}, so {loc} is used"
+                self.st["region"] = loc
+            note += ")"
+        else:
+            kw = {"Bucket": b}
+            if self.st["region"] != "us-east-1":
+                kw["CreateBucketConfiguration"] = {"LocationConstraint": self.st["region"]}
+            self.client("s3").create_bucket(**kw)
+            note = f"created {b} in {self.st['region']}"
+        s3 = self.client("s3")
         s3.put_public_access_block(Bucket=b, PublicAccessBlockConfiguration={
             "BlockPublicAcls": True, "IgnorePublicAcls": True, "BlockPublicPolicy": True, "RestrictPublicBuckets": True})
         s3.put_bucket_tagging(Bucket=b, Tagging={"TagSet": [{"Key": "proofpress", "Value": self.domain}]})
-        return f"created {b} in {self.st['region']}"
+        return note
 
     def _acm(self):
         return self.client("acm", "us-east-1")
@@ -356,14 +384,17 @@ class Provisioner:
         want = set(self.st["aliases"])
         for page in acm.get_paginator("list_certificates").paginate(CertificateStatuses=["ISSUED", "PENDING_VALIDATION"]):
             for c in page["CertificateSummaryList"]:
-                if c["DomainName"] == self.st["aliases"][0]:
+                if c["DomainName"] in self.st["aliases"]:
                     cert = acm.describe_certificate(CertificateArn=c["CertificateArn"])["Certificate"]
                     if set(cert.get("SubjectAlternativeNames", [])) >= want:
                         self.st["cert_arn"] = c["CertificateArn"]
                         return self._cert_records(c["CertificateArn"], reused=True)
-        token = re.sub(r"[^a-zA-Z0-9]", "", slug_for(self.domain))[:32] or "proofpress"
+        token = hashlib.sha1(",".join(self.st["aliases"]).encode()).hexdigest()[:32]
+        short = [a for a in self.st["aliases"] if len(a) <= 64]
+        if not short:
+            raise AwsError("certificates need at least one name of 64 characters or less; use a shorter domain")
         arn = acm.request_certificate(
-            DomainName=self.st["aliases"][0], SubjectAlternativeNames=self.st["aliases"],
+            DomainName=short[0], SubjectAlternativeNames=self.st["aliases"],
             ValidationMethod="DNS", IdempotencyToken=token,
             Tags=[{"Key": "proofpress", "Value": self.domain}])["CertificateArn"]
         self.st["cert_arn"] = arn
@@ -373,7 +404,14 @@ class Provisioner:
     def _cert_records(self, arn, reused=False):
         acm = self._acm()
         for _ in range(20):
-            cert = acm.describe_certificate(CertificateArn=arn)["Certificate"]
+            try:
+                cert = acm.describe_certificate(CertificateArn=arn)["Certificate"]
+            except Exception as e:
+                if "ResourceNotFound" not in str(e) and "ResourceNotFound" not in type(e).__name__:
+                    raise
+                if self.stop.wait(3):
+                    raise Wait("stopped")
+                continue
             opts = cert.get("DomainValidationOptions", [])
             recs = [o["ResourceRecord"] for o in opts if o.get("ResourceRecord")]
             if cert["Status"] == "ISSUED" or (opts and len(recs) == len(opts)):
@@ -420,10 +458,17 @@ class Provisioner:
         cf = self._cf()
         if self.st.get("oac_id"):
             return self.st["oac_id"]
-        for item in cf.list_origin_access_controls().get("OriginAccessControlList", {}).get("Items", []) or []:
-            if item["Name"] == self._name():
-                self.st["oac_id"] = item["Id"]
-                return f"reusing {item['Id']}"
+        marker = None
+        while True:
+            kw = {"Marker": marker} if marker else {}
+            lst = cf.list_origin_access_controls(**kw).get("OriginAccessControlList", {})
+            for item in lst.get("Items", []) or []:
+                if item["Name"] == self._name():
+                    self.st["oac_id"] = item["Id"]
+                    return f"reusing {item['Id']}"
+            marker = lst.get("NextMarker")
+            if not lst.get("IsTruncated") or not marker:
+                break
         oac = cf.create_origin_access_control(OriginAccessControlConfig={
             "Name": self._name(), "Description": f"ProofPress {self.domain}", "SigningProtocol": "sigv4",
             "SigningBehavior": "always", "OriginAccessControlOriginType": "s3"})
@@ -461,7 +506,7 @@ class Provisioner:
         b = self.st["bucket"]
         origin_id = "s3-" + b
         cfg = {
-            "CallerReference": f"proofpress-{slug_for(self.domain)}",
+            "CallerReference": f"proofpress-{slug_for(self.domain)[:60]}-{int(time.time())}",
             "Comment": comment,
             "Enabled": True,
             "Aliases": {"Quantity": len(self.st["aliases"]), "Items": self.st["aliases"]},
@@ -512,7 +557,14 @@ class Provisioner:
         target = self.st["distribution_domain"]
         if self.st.get("zone"):
             changes = []
+            r53 = self.client("route53")
             for a in self.st["aliases"]:
+                # A CNAME can't coexist with the alias records (e.g. left over from Netlify or a parking page).
+                found = r53.list_resource_record_sets(HostedZoneId=self.st["zone"]["id"], StartRecordName=a,
+                                                      StartRecordType="CNAME", MaxItems="1")["ResourceRecordSets"]
+                for rr in found:
+                    if rr["Name"].rstrip(".") == a and rr["Type"] == "CNAME":
+                        changes.append({"Action": "DELETE", "ResourceRecordSet": rr})
                 for t in ("A", "AAAA"):
                     changes.append({"Action": "UPSERT", "ResourceRecordSet": {
                         "Name": a, "Type": t, "AliasTarget": {
@@ -693,5 +745,5 @@ def s3_upload(project, settings, pub, log, dry=False):
     for i in range(0, len(gone), 1000):
         s3.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": k} for k in gone[i:i + 1000]], "Quiet": True})
     sess.client("cloudfront", region_name="us-east-1").create_invalidation(DistributionId=dist, InvalidationBatch={
-        "Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": f"proofpress-{time.time():.0f}"})
+        "Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": f"proofpress-{time.time_ns()}"})
     log.append(f"uploaded {up} changed file(s), removed {len(gone)}, invalidated CloudFront {dist}")

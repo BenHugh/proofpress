@@ -546,6 +546,7 @@ const ZH = {
   f_pass:"及格线（满分 100）", f_rewrites:"最多重写几次，之后交还给你", f_banned:"额外禁用的词句（任何语言）",
   gl_ok:"已连接", gl_root:"这是根用户。可以用，但更安全的做法是用附加了 ProofPress 策略的 IAM 用户。",
   gl_zone:"这个域名的 DNS 在 Route 53：全部自动配置。将配置的地址：", gl_nozone:"DNS 不在 Route 53：配置过程中会列出 2–3 条记录，需要你到域名服务商处添加。地址：",
+  gl_apex:"这是不带 www 的根域名。大多数 DNS 服务商不能用 CNAME 把根域名指向 CloudFront。如果你的服务商不支持 ALIAS、ANAME 或 CNAME 拉平，请在前面加 www. 作为网站域名，或者把域名的 DNS 迁到 Route 53。",
   gl_continue:"继续配置", gl_confirm_reset:"再点一次确认重置", gl_need:"请先完成第 1 步（连接 AWS）和第 2 步（填写域名）",
   gl_purpose_certificate:"HTTPS 证书", gl_purpose_site:"网站", copied:"已复制",
   sec_set:"已设置", sec_unset:"未设置", sec_save:"保存", sec_remove:"删除", sec_from:"来自", sec_saved:"密钥已保存",
@@ -558,6 +559,7 @@ const ZH = {
 const EN_MSG = {
   gl_ok:"Connected", gl_root:"This is the root user. It works, but an IAM user with the ProofPress policy is safer.",
   gl_zone:"Route 53 hosts this domain's DNS: everything is automatic. Configured addresses: ", gl_nozone:"DNS isn't in Route 53: during setup you'll be shown 2-3 records to add at your DNS provider. Address: ",
+  gl_apex:"This is a bare domain (no www). Most DNS providers can't point a bare domain at CloudFront with a CNAME. If yours doesn't offer ALIAS, ANAME or CNAME flattening, use www. in front of it as the site domain, or move the domain's DNS to Route 53.",
   gl_continue:"Continue setup", gl_confirm_reset:"Click again to reset", gl_need:"Connect AWS (step 1) and enter a domain (step 2) first",
   gl_purpose_certificate:"HTTPS certificate", gl_purpose_site:"Website", copied:"Copied",
   sec_set:"Set", sec_unset:"Not set", sec_save:"Save", sec_remove:"Remove", sec_from:"from ", sec_saved:"Secrets saved",
@@ -862,7 +864,7 @@ async function glCheckDomain() {
   if (!r.ok) { box.innerHTML = `<div class="callout err">${esc(r.error)}</div>`; return false; }
   $("#glDomain").value = r.domain;
   box.innerHTML = r.zone ? `<div class="callout ok">${esc(tr("gl_zone"))}<b>${esc(r.aliases.join(", "))}</b></div>`
-                         : `<div class="callout warn">${esc(tr("gl_nozone"))}<b>${esc(r.aliases.join(", "))}</b></div>`;
+                         : `<div class="callout warn">${esc(tr("gl_nozone"))}<b>${esc(r.aliases.join(", "))}</b>${r.apex_warning ? `<br><br>${esc(tr("gl_apex"))}` : ""}</div>`;
   return true;
 }
 async function glStart() {

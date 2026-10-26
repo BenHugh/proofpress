@@ -96,7 +96,10 @@ def run_case(tmp, domain, with_zone):
 
     r53 = T("route53")
     if with_zone:
-        r53.create_hosted_zone(Name="example.org", CallerReference="z1")
+        zid = r53.create_hosted_zone(Name="example.org", CallerReference="z1")["HostedZone"]["Id"]
+        # leftover CNAME (e.g. from a previous host) must not block the alias records
+        r53.change_resource_record_sets(HostedZoneId=zid, ChangeBatch={"Changes": [{"Action": "CREATE", "ResourceRecordSet": {
+            "Name": "www.example.org", "Type": "CNAME", "TTL": 300, "ResourceRecords": [{"Value": "old-host.example.net"}]}}]})
 
     who = aws.identity(proj)
     check(f"[{domain}] identity", who["account"] == "123456789012", who)
@@ -145,6 +148,8 @@ def run_case(tmp, domain, with_zone):
         aliases = {(r["Name"].rstrip("."), r["Type"]) for r in recs if r.get("AliasTarget")}
         check(f"[{domain}] Route 53 alias records", {(domain, "A"), ("www." + domain, "AAAA")} <= aliases, aliases)
         check(f"[{domain}] no manual DNS needed", st["dns_for_user"] == [])
+        cnames = [r for r in recs if r["Name"].rstrip(".") == "www." + domain and r["Type"] == "CNAME"]
+        check(f"[{domain}] conflicting CNAME replaced", not cnames, cnames)
     else:
         kinds = sorted({r["purpose"] for r in st["dns_for_user"]})
         check(f"[{domain}] manual DNS records listed", kinds == ["certificate", "site"], st["dns_for_user"])
@@ -156,6 +161,12 @@ def run_case(tmp, domain, with_zone):
     st2 = aws.read_state(proj)
     check(f"[{domain}] rerun reuses resources", before == (st2["bucket"], st2["cert_arn"], st2["distribution_id"]) and not st2.get("error"),
           st2.get("error"))
+
+    # reset + different region: the existing bucket's real region must be used for the origin
+    aws.reset(proj)
+    p3 = aws.Provisioner(proj, domain, "eu-west-1")
+    p3.step_identity(); p3.step_domain(); detail = p3.step_bucket()
+    check(f"[{domain}] reused bucket keeps its real region", p3.st["region"] == "us-east-1" and "us-east-1" in detail, detail)
 
     # publishing later goes through boto3 too
     from proofpress.publish import publish
@@ -171,6 +182,7 @@ def main():
             run_case(tmp, "example.org", with_zone=True)
         with mock_aws():
             run_case(tmp, "www.external-dns.net", with_zone=False)
+        check("bare-domain warning", aws.looks_apex("example.com") and aws.looks_apex("example.co.jp") and not aws.looks_apex("www.example.com"))
         try:
             aws.normalize_domain("not a domain")
             check("bad domain rejected", False)
