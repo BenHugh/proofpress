@@ -46,9 +46,39 @@ def mocked_session_factory(state):
         sess = real(project, settings)
         ev = sess.events
 
-        def publish_fn(params, **kw):  # moto: PublishFunction is not implemented
-            return (type("R", (), {"status_code": 200, "headers": {}})(),
-                    {"FunctionSummary": {"Name": "fn", "FunctionMetadata": {"Stage": "LIVE"}}})
+        # CloudFront Functions: older moto versions (the ones for Python 3.9) don't emulate them at all,
+        # newer ones lack PublishFunction, so they are stubbed here with the real response shapes.
+        from botocore.exceptions import ClientError
+        funcs = state.setdefault("functions", {})
+        ok = type("R", (), {"status_code": 200, "headers": {}})()
+
+        def summary(name):
+            return {"Name": name, "FunctionMetadata": {"Stage": "LIVE",
+                    "FunctionARN": f"arn:aws:cloudfront::123456789012:function/{name}"}}
+
+        def fn_name(params):
+            return params["url_path"].split("/function/")[1].split("/")[0]
+
+        def describe_fn(params, **kw):
+            name = fn_name(params)
+            if name not in funcs:
+                raise ClientError({"Error": {"Code": "NoSuchFunctionExists", "Message": "not found"}}, "DescribeFunction")
+            return ok, {"ETag": funcs[name], "FunctionSummary": summary(name)}
+
+        def create_fn(params, **kw):
+            body = params["body"].decode() if isinstance(params["body"], bytes) else params["body"]
+            import re as _re
+            name = _re.search(r"<Name>([^<]+)</Name>", body).group(1)
+            funcs[name] = "E1"
+            return ok, {"ETag": "E1", "FunctionSummary": summary(name)}
+
+        def update_fn(params, **kw):
+            name = fn_name(params)
+            funcs[name] = "E2"
+            return ok, {"ETag": "E2", "FunctionSummary": summary(name)}
+
+        def publish_fn(params, **kw):
+            return ok, {"FunctionSummary": summary(fn_name(params))}
 
         def cert_status(parsed, **kw):  # moto keeps certificates pending forever
             if state.get("issue") and "Certificate" in parsed:
@@ -59,6 +89,9 @@ def mocked_session_factory(state):
                 parsed["Distribution"]["Status"] = "Deployed" if state.get("deployed") else "InProgress"
 
         ev.register("before-call.cloudfront.PublishFunction", publish_fn)
+        ev.register("before-call.cloudfront.DescribeFunction", describe_fn)
+        ev.register("before-call.cloudfront.CreateFunction", create_fn)
+        ev.register("before-call.cloudfront.UpdateFunction", update_fn)
         ev.register("after-call.acm.DescribeCertificate", cert_status)
         ev.register("after-call.cloudfront.GetDistribution", dist_status)
         return sess
