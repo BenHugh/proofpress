@@ -66,7 +66,7 @@ proofpress ui --project ~/sites/my-product
 | 发布方式 | 新静态站 + 托管平台，或已有网站 + 目标；测试按钮（构建、dry run、发布） | `proofpress.json` |
 | 质量闸门 | 及格线、最多重写次数、额外禁用词 | `proofpress.json` |
 
-设置页只在 `127.0.0.1` 上运行，每次启动有独立 token。密钥（API token、密码）**永远不会**保存，只读环境变量。
+设置页只在 `127.0.0.1` 上运行，每次启动有独立 token。API key 和密码在“密钥”页填写：只保存在你电脑上项目的 `.proofpress/` 文件夹里（git 会忽略它），不会写进 `proofpress.json`。如果设置了同名环境变量，以环境变量为准。
 
 更喜欢直接改文件？`proofpress.json` 和 `backlog.csv` 都是普通文件；在某个 context 部分勾选“手动模式”，就可以直接手改对应的 Markdown。
 
@@ -111,9 +111,23 @@ server 的 `get_instructions` 工具会返回完整的操作手册，所以不�
 
 把 `skills/proofpress/` 复制到你的 agent 加载 skill 的目录（Claude Code 是 `~/.claude/skills/`）。skill 会调用 `proofpress` 命令行，所以也要把 `cli/` 加到 PATH（`./install.sh --cli`）。
 
+## 不用命令行，一键上线到 AWS
+
+在设置页打开 **“上线到 AWS”** 页：
+
+1. **连接 AWS 账号。** 粘贴访问密钥（页面会一步步教你创建 IAM 用户，并给出可以直接复制的最小权限策略），或者选择这台电脑上已有的 AWS CLI 配置。点“保存并测试连接”。
+2. **填写域名**，比如 `www.example.com`，点“检查域名”。
+3. **点“开始自动配置”。** ProofPress 会在你自己的 AWS 账号里创建私有 S3 bucket、HTTPS 证书（ACM）、带网址改写函数的 CloudFront 分发和 DNS 记录，然后生成并上传网站，再确认 `https://` 能打开。页面上逐步显示进度；中途中断了，下次会从断点继续。
+
+域名的 DNS 在 Route 53 的话，全程自动（www 和不带 www 的根域名都会配置好，其中一个自动跳转到另一个）。DNS 在别处（GoDaddy、Namecheap、Cloudflare、阿里云等）的话，页面会列出需要添加的 2–3 条记录，添加生效后自动继续。
+
+![上线到 AWS 向导](docs/images/go-live-aws.png)
+
+之后每次发布都会自动上传到这个网站。小网站在 AWS 上的费用通常每月远低于 1 美元。
+
 ## 发布目标
 
-**新静态站**：S3 + CloudFront（AWS CLI profile，一次性配置见 [docs/deploy.md](docs/deploy.md)）、Cloudflare Pages（`CLOUDFLARE_API_TOKEN`）、Netlify（`NETLIFY_AUTH_TOKEN`）、Vercel（`VERCEL_TOKEN`）、Git 仓库（推送后由托管平台自动部署）、或者只构建（自己上传 `public/`）。
+**新静态站**：S3 + CloudFront（用“上线到 AWS”页从域名一键配置；手动方式见 [docs/deploy.md](docs/deploy.md)）、Cloudflare Pages（`CLOUDFLARE_API_TOKEN`）、Netlify（`NETLIFY_AUTH_TOKEN`）、Vercel（`VERCEL_TOKEN`）、Git 仓库（推送后由托管平台自动部署）、或者只构建（自己上传 `public/`）。
 
 **已有网站**：Markdown 仓库（按 Astro / Hugo / 原样 frontmatter 写入、复制封面图、提交，可选推送）、WordPress（REST API 创建或更新文章，默认存草稿，需要 `WP_APP_PASSWORD` 应用密码）、Webhook（POST 包含 markdown、html、frontmatter、JSON-LD 和封面图的 JSON）。
 

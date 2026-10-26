@@ -66,7 +66,7 @@ Everything project-specific is entered here, never hard-coded:
 | Publishing | new static site + host, or existing site + target; test buttons (build, dry run, publish) | `proofpress.json` |
 | Quality gate | pass mark, max rewrites, extra banned phrases | `proofpress.json` |
 
-The page runs only on `127.0.0.1`, with a per-session token. Secrets (API tokens, passwords) are **never** stored: they're environment variables.
+The page runs only on `127.0.0.1`, with a per-session token. API keys and passwords go in the **Secrets** tab: they're saved only on your computer in the project's `.proofpress/` folder (git-ignored) and never written to `proofpress.json`. An environment variable with the same name takes priority.
 
 Prefer editing files? `proofpress.json` and `backlog.csv` are plain files; tick "Manual mode" on a context section to hand-edit its Markdown instead.
 
@@ -111,13 +111,27 @@ The server's `get_instructions` tool returns the full playbook, so clients witho
 
 Copy `skills/proofpress/` to wherever your agent loads skills from (for Claude Code that's `~/.claude/skills/`). The skill calls the `proofpress` CLI, so put `cli/` on your PATH too (`./install.sh --cli`).
 
+## Go live on AWS without the command line
+
+Open the **Go live on AWS** tab in the settings page:
+
+1. **Connect your AWS account.** Paste an access key (the page walks you through creating an IAM user and shows the exact minimal policy to copy), or pick an AWS CLI profile already on your computer. Press *Save and test connection*.
+2. **Enter your domain**, e.g. `www.example.com`, and press *Check domain*.
+3. **Press *Start automatic setup*.** In your own AWS account, ProofPress creates a private S3 bucket, an HTTPS certificate (ACM), a CloudFront distribution with a URL-rewrite function, the DNS records, then builds and uploads the site and checks it answers on `https://`. Progress shows step by step; it resumes where it stopped if interrupted.
+
+If the domain's DNS is in Route 53, it's fully automatic (the www and bare domain are both set up, one redirecting to the other). If DNS is elsewhere (GoDaddy, Namecheap, Cloudflare...), the page lists the 2-3 records to add there and carries on by itself once they're live.
+
+![Go live on AWS wizard](docs/images/go-live-aws.png)
+
+After that, every publish uploads to the new site. A small site typically costs well under a dollar a month on AWS.
+
 ## Publishing targets
 
 **New static site** (`Publishing > Build a new static site`)
 
 | Host | Needs |
 |---|---|
-| AWS S3 + CloudFront | AWS CLI profile; one-time setup in [docs/deploy.md](docs/deploy.md#aws-s3--cloudfront) |
+| AWS S3 + CloudFront | the **Go live on AWS** tab sets it all up from your domain (manual route in [docs/deploy.md](docs/deploy.md#aws-s3--cloudfront)) |
 | Cloudflare Pages | Node.js, `CLOUDFLARE_API_TOKEN` |
 | Netlify | Node.js, `NETLIFY_AUTH_TOKEN` |
 | Vercel | Node.js, `VERCEL_TOKEN` |

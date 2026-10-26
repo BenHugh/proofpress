@@ -22,7 +22,11 @@ class DeployError(Exception):
 
 
 def _run(cmd, log, env=None, cwd=None, dry=False):
-    shown = shlex.join(cmd)
+    masked = list(cmd)
+    for i, a in enumerate(masked[:-1]):
+        if a == "--token":
+            masked[i + 1] = "********"
+    shown = shlex.join(masked)
     log.append("$ " + shown)
     if dry:
         return ""
@@ -44,11 +48,28 @@ def _need(binary, hint):
 
 def _need_env(var):
     if not os.environ.get(var):
-        raise DeployError(f"environment variable {var} is not set (secrets are never stored in proofpress.json)")
+        raise DeployError(f"{var} is not set: add it on the settings page (Secrets tab) or as an environment variable")
 
 
-def s3(s, pub, log, dry):
+def s3(s, pub, log, dry, project=None):
     c = s["publish"]["s3"]
+    try:
+        import boto3  # noqa: F401
+        have_sdk = True
+    except ImportError:
+        have_sdk = False
+    from . import secrets
+    keys_saved = bool(secrets.get(project, "AWS_ACCESS_KEY_ID")) if project else False
+    if have_sdk and (c.get("credentials") == "profile" or keys_saved):
+        from .aws import AwsError, s3_upload
+        try:
+            s3_upload(project, s, pub, log, dry)
+        except AwsError as e:
+            raise DeployError(str(e))
+        except Exception as e:
+            from .aws import _explain
+            raise DeployError(_explain(e))
+        return
     prof = c.get("aws_profile") or "default"
     if not dry:
         _need("aws", "Install the AWS CLI (brew install awscli) and run aws configure / aws sso login.")
@@ -145,12 +166,14 @@ def deploy(project, dry_run=False):
         raise DeployError("no deploy provider chosen (Settings > Publishing). The site is built in public/ and ready to upload by hand.")
     if not ok:
         raise DeployError("fill these settings first: " + ", ".join(missing))
+    from . import secrets
+    secrets.load_into_env(r)
     pub = r / "public"
     if not (pub / "index.html").exists():
         raise DeployError("public/ is empty; run `proofpress build` first")
     log = []
     if prov == "s3":
-        s3(s, pub, log, dry_run)
+        s3(s, pub, log, dry_run, r)
     elif prov == "cloudflare":
         cloudflare(s, pub, log, dry_run)
     elif prov == "netlify":

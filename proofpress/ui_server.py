@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 from . import __version__
 from . import articles, backlog as bl, project as pj
+from . import secrets as pp_secrets
 
 HERE = Path(__file__).resolve().parent
 
@@ -76,6 +77,7 @@ def make_handler(project_dir, token, port):
                 "next": nxt,
                 "validation": pj.validate(project_dir),
                 "articles": articles.list_articles(project_dir),
+                "secrets": pp_secrets.masked(project_dir),
                 "meta": {
                     "statuses": bl.STATUSES, "intents": bl.INTENTS,
                     "providers": pj.SITE_PROVIDERS, "targets": pj.EXISTING_TARGETS,
@@ -97,6 +99,8 @@ def make_handler(project_dir, token, port):
             try:
                 if path == "/api/state":
                     self._json(200, self._state())
+                elif path == "/api/aws/state":
+                    self._json(200, aws_state(project_dir))
                 elif path == "/api/backlog.csv":
                     self._send(200, bl.to_text(bl.read(project_dir)), "text/csv; charset=utf-8",
                                {"Content-Disposition": 'attachment; filename="backlog.csv"'})
@@ -127,6 +131,10 @@ def make_handler(project_dir, token, port):
                     self._json(200, {"rows": bl.parse_text(body.get("csv", ""))})
                 elif path == "/api/action":
                     self._json(200, run_action(project_dir, body.get("action"), body.get("slug")))
+                elif path == "/api/secrets":
+                    self._json(200, {"secrets": pp_secrets.set_many(project_dir, body.get("values") or {})})
+                elif path.startswith("/api/aws/"):
+                    self._json(200, aws_action(project_dir, path.rsplit("/", 1)[-1], body))
                 else:
                     self._json(404, {"error": "not found"})
             except (bl.BacklogError, pj.ProjectError, KeyError, ValueError) as e:
@@ -135,6 +143,40 @@ def make_handler(project_dir, token, port):
                 self._json(500, {"error": f"{type(e).__name__}: {e}"})
 
     return H
+
+
+def aws_state(project_dir):
+    from . import aws
+    try:
+        import boto3  # noqa: F401
+        sdk = True
+    except ImportError:
+        sdk = False
+    st = aws.public_state(project_dir)
+    st["sdk"] = sdk
+    st["profiles"] = aws.list_profiles() if sdk else []
+    st["policy"] = json.dumps(aws.POLICY, indent=2)
+    return st
+
+
+def aws_action(project_dir, action, body):
+    from . import aws
+    try:
+        if action == "test":
+            return {"ok": True, "identity": aws.identity(project_dir)}
+        if action == "check-domain":
+            return {"ok": True, **aws.check_domain(project_dir, body.get("domain", ""))}
+        if action == "start":
+            return {"ok": True, "state": aws.start(project_dir, body.get("domain"), body.get("region"))}
+        if action == "stop":
+            return {"ok": True, "state": aws.stop(project_dir)}
+        if action == "reset":
+            return {"ok": True, "state": aws.reset(project_dir)}
+    except aws.AwsError as e:
+        return {"ok": False, "error": str(e)}
+    except Exception as e:
+        return {"ok": False, "error": aws._explain(e)}
+    raise ValueError(f"unknown action {action}")
 
 
 def run_action(project_dir, action, slug=None):

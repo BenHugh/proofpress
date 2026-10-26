@@ -75,7 +75,7 @@ DEFAULT_SETTINGS = {
     "publish": {
         "mode": "site",
         "site_provider": "none",
-        "s3": {"bucket": "", "cloudfront_distribution_id": "", "aws_profile": "default"},
+        "s3": {"bucket": "", "cloudfront_distribution_id": "", "aws_profile": "default", "region": "us-east-1", "credentials": "keys"},
         "cloudflare": {"project_name": ""},
         "netlify": {"site_id": ""},
         "vercel": {"scope": ""},
@@ -101,7 +101,7 @@ EXISTING_TARGETS = ["markdown-repo", "wordpress", "webhook"]
 
 # Secrets never go in proofpress.json; they are read from the environment.
 SECRET_ENV = {
-    "s3": "AWS credentials via the AWS CLI profile (aws configure / aws sso login)",
+    "s3": "AWS access keys (Go live tab) or an AWS CLI profile on this computer",
     "cloudflare": "CLOUDFLARE_API_TOKEN (and CLOUDFLARE_ACCOUNT_ID if you have several accounts)",
     "netlify": "NETLIFY_AUTH_TOKEN",
     "vercel": "VERCEL_TOKEN",

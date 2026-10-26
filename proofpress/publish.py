@@ -152,7 +152,7 @@ def to_wordpress(r, s, arts, log, dry):
     c = s["publish"]["wordpress"]
     pw = os.environ.get("WP_APP_PASSWORD")
     if not pw and not dry:
-        raise PublishError("environment variable WP_APP_PASSWORD is not set (create an Application Password in WordPress: Users > Profile)")
+        raise PublishError("WP_APP_PASSWORD is not set: create an Application Password in WordPress (Users > Profile) and add it on the settings page (Secrets tab)")
     api = c["url"].rstrip("/") + "/wp-json/wp/v2"
     auth = "Basic " + base64.b64encode(f"{c['username']}:{pw or ''}".encode()).decode()
     st = state(r)
@@ -226,6 +226,8 @@ def to_webhook(r, s, arts, log, dry):
 
 def publish(project, slug=None, dry_run=False):
     r = require_project(project)
+    from . import secrets
+    secrets.load_into_env(r)
     s = load(r)
     pub = s["publish"]
     log = []

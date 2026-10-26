@@ -21,7 +21,11 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Smoke test
         run: python tests/smoke_test.py
+      - name: AWS go-live wizard (mocked AWS)
+        run: |
+          python -m pip install "moto[s3,acm,cloudfront,route53]"
+          python tests/test_aws_setup.py
       - name: Smoke test without optional dependencies
         run: |
-          python -m pip uninstall -y markdown pillow
+          python -m pip uninstall -y markdown pillow boto3
           python tests/smoke_test.py

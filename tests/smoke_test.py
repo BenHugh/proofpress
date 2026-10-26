@@ -110,7 +110,7 @@ def run(tmp):
                 s["publish"][prov].update(extra)
             pj.save(proj, s)
             res = publish(proj, dry_run=True)
-            check(f"dry run {prov}", any(line.startswith("$ ") for line in res["log"]))
+            check(f"dry run {prov}", any(line.startswith(("$ ", "would upload")) for line in res["log"]), res["log"])
 
         if shutil.which("git"):
             repo = tmp / "repo"

@@ -1,6 +1,6 @@
 # Publishing
 
-The user chooses the target in the settings UI (Publishing tab). You only run it. Secrets are environment variables, never files; if one is missing, stop and tell the user which.
+The user chooses the target in the settings UI (Publishing tab). You only run it. Secrets are entered by the user in the settings page (Secrets tab) or set as environment variables; never ask the user to paste a secret into the chat. If one is missing, stop and tell the user which, and that it goes in the Secrets tab.
 
 ## Mode 1: new static site (`publish.mode = site`)
 
@@ -26,7 +26,7 @@ Each article page gets `<title>`, meta description, canonical, Open Graph + Twit
 | Host | What runs | Secret |
 |---|---|---|
 | none | build only; the user uploads `public/` | – |
-| s3 | `aws s3 sync` (images cached a week, pages 5 minutes) + CloudFront invalidation | AWS CLI profile |
+| s3 | upload changed files (images cached a week, pages 5 minutes), delete removed ones, invalidate CloudFront. The user sets the whole thing up from a domain in the settings page tab **Go live on AWS** | access keys in the Secrets tab, or an AWS CLI profile |
 | cloudflare | `npx wrangler pages deploy public` | `CLOUDFLARE_API_TOKEN` |
 | netlify | `npx netlify-cli deploy --prod` | `NETLIFY_AUTH_TOKEN` |
 | vercel | `npx vercel deploy --prod` | `VERCEL_TOKEN` |

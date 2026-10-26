@@ -41,7 +41,9 @@ Use this if Cloudflare Pages, Netlify, Vercel or GitHub Pages already watches a 
 
 ### AWS S3 + CloudFront
 
-One-time setup:
+**Easiest:** open the settings page (`proofpress ui`), go to **Go live on AWS**, connect your account, enter your domain and press *Start automatic setup*. It does everything below for you and fills in the settings. The rest of this section is the manual route, for people who'd rather click through the AWS console or already have a bucket and distribution.
+
+Manual one-time setup:
 
 1. **S3 bucket**: private (Block Public Access on). No static website hosting needed.
 2. **ACM certificate** in **us-east-1** for `example.com` and `www.example.com`, DNS-validated.

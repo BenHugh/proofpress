@@ -1,3 +1,4 @@
 # Optional. The settings UI, CLI, backlog tools, scanner and MCP server run on the standard library.
 markdown>=3.4   # building HTML (static site, WordPress, webhook)
 pillow>=9.0     # hero / Open Graph images
+boto3>=1.26     # Go live on AWS wizard and S3 uploads (no AWS CLI needed)
