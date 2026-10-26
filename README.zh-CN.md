@@ -35,6 +35,7 @@ proofpress/
 git clone https://github.com/BenHugh/proofpress.git
 cd proofpress
 ./install.sh                      # 把 CLI 加到 PATH、装 markdown + pillow、给 Claude Code 装 skill 和 MCP
+source ~/.zshrc                   # 或者新开一个终端窗口，这样才能找到 proofpress 命令
 
 # 先跑示例：构建虚构的 "Leafnote" 站点并打开看看
 proofpress build --project examples/demo-project

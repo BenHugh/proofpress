@@ -2,7 +2,8 @@
 # ProofPress installer for macOS / Linux.
 #
 #   ./install.sh            install everything below
-#   ./install.sh --cli      put `proofpress` on your PATH (~/.local/bin)
+#   ./install.sh --cli      put `proofpress` on your PATH (~/.local/bin, added to your shell profile;
+#                           set PROOFPRESS_NO_PROFILE=1 to skip editing the profile)
 #   ./install.sh --deps     pip install markdown + pillow
 #   ./install.sh --skill    link the skill into ~/.claude/skills/proofpress (Claude Code)
 #   ./install.sh --mcp      register the MCP server with Claude Code (user scope)
@@ -12,12 +13,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PY="${PROOFPRESS_PYTHON:-python3}"
 
+NEED_RELOAD=""
 want_all=1; want_cli=0; want_deps=0; want_skill=0; want_mcp=0
 for a in "$@"; do
   want_all=0
   case "$a" in
     --cli) want_cli=1;; --deps) want_deps=1;; --skill) want_skill=1;; --mcp) want_mcp=1;;
-    -h|--help) sed -n '2,11p' "$0"; exit 0;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0;;
     *) echo "unknown option $a"; exit 1;;
   esac
 done
@@ -43,7 +45,26 @@ if [[ $want_cli == 1 ]]; then
   mkdir -p "$HOME/.local/bin"
   ln -sf "$ROOT/cli/proofpress" "$HOME/.local/bin/proofpress"
   echo "   linked ~/.local/bin/proofpress"
-  case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo "   add this to your shell profile:  export PATH=\"\$HOME/.local/bin:\$PATH\"";; esac
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *)
+      PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+      case "${SHELL:-}" in
+        */zsh) PROFILE="$HOME/.zshrc" ;;
+        */bash) if [[ "$(uname)" == "Darwin" ]]; then PROFILE="$HOME/.bash_profile"; else PROFILE="$HOME/.bashrc"; fi ;;
+        *) PROFILE="$HOME/.profile" ;;
+      esac
+      if [[ "${PROOFPRESS_NO_PROFILE:-}" == "1" ]]; then
+        echo "   add this to your shell profile:  $PATH_LINE"
+      elif grep -qsF "$PATH_LINE" "$PROFILE"; then
+        echo "   $PROFILE already adds ~/.local/bin to PATH"
+      else
+        printf '\n# Added by ProofPress installer\n%s\n' "$PATH_LINE" >> "$PROFILE"
+        echo "   added ~/.local/bin to PATH in $PROFILE"
+      fi
+      NEED_RELOAD="$PROFILE"
+      ;;
+  esac
 fi
 
 if [[ $want_skill == 1 ]]; then
@@ -69,6 +90,11 @@ if [[ $want_mcp == 1 ]]; then
 fi
 
 echo
+if [[ -n "$NEED_RELOAD" ]]; then
+  echo "To use the proofpress command in THIS terminal, run:  source $NEED_RELOAD"
+  echo "(new terminal windows pick it up automatically)"
+  echo
+fi
 echo "Done. Next:"
 echo "  proofpress init ~/my-site --name \"My Product\""
 echo "  proofpress ui --project ~/my-site"

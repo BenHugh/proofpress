@@ -35,6 +35,7 @@ proofpress/
 git clone https://github.com/BenHugh/proofpress.git
 cd proofpress
 ./install.sh                      # CLI on PATH, markdown + pillow, skill + MCP for Claude Code
+source ~/.zshrc                   # or open a new terminal, so the `proofpress` command is found
 
 # Try the demo first: build the fictional "Leafnote" site and open it
 proofpress build --project examples/demo-project

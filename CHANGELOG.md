@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Installer now adds `~/.local/bin` to PATH in your shell profile (`~/.zshrc`, `~/.bash_profile` / `~/.bashrc`, or `~/.profile`) so the `proofpress` command works after install. Set `PROOFPRESS_NO_PROFILE=1` to skip.
+
 ## 0.1.0 (2026-10-26)
 
 First public release.
