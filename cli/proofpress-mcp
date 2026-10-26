@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# ProofPress MCP server launcher (stdio).
+set -euo pipefail
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+exec "${PROOFPRESS_PYTHON:-python3}" "$ROOT/mcp/server.py"

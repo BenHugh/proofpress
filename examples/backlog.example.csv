@@ -1,0 +1,5 @@
+keyword,cluster,priority,intent_hint,status,slug,published_at,notes
+best plant watering app,apps,1,buying guide,todo,,,"secondaries: plant watering reminder app, plant care app"
+plant watering schedule template,schedules,1,list (download),todo,,,"the searcher wants a printable or spreadsheet file"
+how often to water succulents,care,2,how-to,todo,,,"verify species needs on an extension site"
+bottom watering vs top watering,care,3,comparison,todo,,,

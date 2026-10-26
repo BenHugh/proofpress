@@ -1,0 +1,30 @@
+{
+  "name": "proofpress",
+  "displayName": "ProofPress",
+  "version": "0.1.0",
+  "description": "Fact-checked SEO article pipeline: keyword backlog, search intent, product-truth and source checks, anti-slop passes, independent scoring, hero images, and publishing to a static site, a Markdown repo, WordPress or a webhook.",
+  "author": {
+    "name": "BenHugh",
+    "url": "https://github.com/BenHugh"
+  },
+  "homepage": "https://github.com/BenHugh/proofpress",
+  "repository": "https://github.com/BenHugh/proofpress",
+  "license": "FSL-1.1-ALv2",
+  "keywords": [
+    "seo",
+    "content",
+    "blog",
+    "programmatic-seo",
+    "fact-check",
+    "mcp",
+    "static-site"
+  ],
+  "mcpServers": {
+    "proofpress": {
+      "command": "python3",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/server.py"
+      ]
+    }
+  }
+}

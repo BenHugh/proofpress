@@ -1,0 +1,13 @@
+{
+  "name": "proofpress",
+  "owner": {
+    "name": "BenHugh"
+  },
+  "plugins": [
+    {
+      "name": "proofpress",
+      "source": "./",
+      "description": "Fact-checked SEO article pipeline with a settings UI, a Claude skill and an MCP server."
+    }
+  ]
+}

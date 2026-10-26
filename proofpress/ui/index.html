@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProofPress Settings</title>
+<style>
+:root{
+  --bg:#f6f5f2;--panel:#ffffff;--ink:#1d1f23;--muted:#6a6f78;--line:#e3e0da;--soft:#efede8;
+  --brand:#2b4c7e;--brand-ink:#ffffff;--ok:#1f7a4d;--ok-bg:#e5f3ec;--warn:#9a6200;--warn-bg:#fdf2dc;--err:#b3261e;--err-bg:#fbe7e5;
+  --focus:#2b4c7e33;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#16171a;--panel:#1e2024;--ink:#e9e9ea;--muted:#a0a4ab;--line:#33363c;--soft:#26292e;
+  --brand:#8fb1e8;--brand-ink:#0f1726;--ok:#6fd3a0;--ok-bg:#16301f;--warn:#f0c46b;--warn-bg:#352a12;--err:#ff8f86;--err-bg:#3a1a18;--focus:#8fb1e844;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{font-weight:800;letter-spacing:-.01em;font-size:18px}
+.logo span{color:var(--brand)}
+.proj{color:var(--muted);font:12px var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.btn{border:1px solid var(--line);background:var(--panel);padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.danger{color:var(--err)}
+.btn:disabled{opacity:.5;cursor:default}
+.dirty{font-size:12px;color:var(--warn)}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:calc(100vh - 54px)}
+.side{border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:54px;align-self:start;height:calc(100vh - 54px);overflow:auto}
+.side button{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.side button:hover{background:var(--soft)}
+.side button.on{background:var(--soft);font-weight:650}
+.dot{width:8px;height:8px;border-radius:50%;background:transparent;flex:none}
+.dot.err{background:var(--err)}.dot.warn{background:var(--warn)}.dot.ok{background:var(--ok)}
+main{padding:24px 32px 80px;max-width:1080px}
+h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:16px;margin:28px 0 10px}
+.sub{color:var(--muted);margin:0 0 20px;max-width:760px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.grid .full{grid-column:1/-1}
+label.f{display:block}
+label.f>span{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+label.f>small,.hint{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}
+input[type=text],input[type=url],input[type=number],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--focus)}
+input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--panel)}
+.colors{display:flex;gap:18px;flex-wrap:wrap}
+.colors label{display:flex;align-items:center;gap:8px;font-size:13px}
+.check{display:flex;align-items:flex-start;gap:8px}
+.check input{margin-top:3px}
+.list .item{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px}
+.list .item>.fields{flex:1;display:grid;gap:8px}
+.list .item.boxed{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg)}
+.list .empty{color:var(--muted);font-size:13px;margin:0 0 8px}
+.callout{border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:14px}
+.callout.err{background:var(--err-bg);color:var(--err)}
+.callout.warn{background:var(--warn-bg);color:var(--warn)}
+.callout.ok{background:var(--ok-bg);color:var(--ok)}
+.callout ul{margin:6px 0 0;padding-left:18px}
+.callout.info{background:var(--soft);color:var(--ink)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--soft);border-radius:10px;padding:10px 14px;min-width:96px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+pre,code{font-family:var(--mono);font-size:12.5px}
+pre{background:var(--soft);padding:12px 14px;border-radius:10px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:8px 0 0;max-height:420px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:1400px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--soft);position:sticky;top:0}
+td input,td select{padding:5px 7px;font-size:13.5px}
+td.kw{min-width:240px}td.notes{min-width:240px}td.nar{min-width:80px}td.cl{min-width:120px}td.in{min-width:170px}td.st{min-width:130px}td.sl{min-width:200px}td.dt{min-width:120px}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.seg button{border:0;background:var(--panel);padding:9px 16px;cursor:pointer}
+.seg button.on{background:var(--brand);color:var(--brand-ink);font-weight:600}
+[hidden]{display:none!important}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+#toast.show{opacity:1}
+.tab{display:none}.tab.on{display:block}
+.kbd{font:12px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px;color:var(--muted)}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}
+  .side button{width:auto;white-space:nowrap;gap:8px}
+  main{padding:18px 16px 80px}
+  .grid{grid-template-columns:1fr}
+  .proj{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">Proof<span>Press</span></div>
+  <div class="proj" id="proj"></div>
+  <span class="dirty" id="dirty" hidden data-i18n="unsaved">Unsaved changes</span>
+  <button class="btn ghost small" id="langBtn">中文</button>
+  <button class="btn primary" id="saveBtn" data-i18n="save">Save</button>
+</header>
+<div class="layout">
+<nav class="side" id="side">
+  <button data-tab="overview"><span data-i18n="t_overview">Overview</span><i class="dot" data-dot="overview"></i></button>
+  <button data-tab="site"><span data-i18n="t_site">Site &amp; brand</span><i class="dot" data-dot="site"></i></button>
+  <button data-tab="product"><span data-i18n="t_product">Product</span><i class="dot" data-dot="product"></i></button>
+  <button data-tab="keywords"><span data-i18n="t_keywords">Keywords</span><i class="dot" data-dot="keywords"></i></button>
+  <button data-tab="voice"><span data-i18n="t_voice">Audience &amp; voice</span><i class="dot" data-dot="voice"></i></button>
+  <button data-tab="facts"><span data-i18n="t_facts">Fact-check</span><i class="dot" data-dot="facts"></i></button>
+  <button data-tab="publish"><span data-i18n="t_publish">Publishing</span><i class="dot" data-dot="publish"></i></button>
+  <button data-tab="quality"><span data-i18n="t_quality">Quality gate</span><i class="dot" data-dot="quality"></i></button>
+</nav>
+<main>
+
+<!-- OVERVIEW -->
+<section class="tab" id="tab-overview">
+  <h1 data-i18n="t_overview">Overview</h1>
+  <p class="sub" data-i18n="ov_sub">Fill in the tabs on the left, save, then ask your AI agent to write the next article. Red items block writing; amber items are worth fixing.</p>
+  <div id="ovChecks"></div>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="ov_backlog">Keyword backlog</h2>
+    <div class="stats" id="ovStats"></div>
+    <p class="hint" id="ovNext"></p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="ov_run">Run the pipeline</h2>
+    <p class="hint" data-i18n="ov_run_hint">In Claude Code (or any agent with the ProofPress skill or MCP server), say one of these:</p>
+    <pre id="ovPrompts"></pre>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="ov_articles">Approved articles</h2>
+    <div id="ovArticles"></div>
+  </div>
+</section>
+
+<!-- SITE -->
+<section class="tab" id="tab-site">
+  <h1 data-i18n="t_site">Site &amp; brand</h1>
+  <p class="sub" data-i18n="site_sub">Where the articles live and how pages look. In "existing site" mode only the name, URL, language and blog path matter.</p>
+  <div class="card grid">
+    <label class="f"><span data-i18n="f_site_name">Site name</span><input type="text" data-path="site.name" placeholder="Acme"></label>
+    <label class="f"><span data-i18n="f_base_url">Site URL</span><input type="url" data-path="site.base_url" placeholder="https://www.example.com"><small data-i18n="h_base_url">The final https:// domain, no trailing slash. Canonical tags and the sitemap use it.</small></label>
+    <label class="f"><span data-i18n="f_language">Article language</span>
+      <select data-path="site.language">
+        <option value="en">English</option><option value="zh">中文</option><option value="ja">日本語</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="es">Español</option><option value="it">Italiano</option><option value="pt">Português</option><option value="ko">한국어</option>
+      </select><small data-i18n="h_language">The anti-slop word lists are English-only; structural checks run in every language.</small></label>
+    <label class="f"><span data-i18n="f_spelling">English spelling</span>
+      <select data-path="site.spelling"><option value="US">US</option><option value="UK">UK</option><option value="CA">Canada</option><option value="AU">Australia</option></select></label>
+    <label class="f"><span data-i18n="f_blog_path">Blog path</span><input type="text" data-path="site.blog_path" placeholder="blog"><small data-i18n="h_blog_path">Articles live at /blog-path/slug/. Must match your site in existing-site mode.</small></label>
+    <label class="f"><span data-i18n="f_blog_label">Blog label in the menu</span><input type="text" data-path="site.blog_label" placeholder="Guides"></label>
+    <label class="f"><span data-i18n="f_author">Author / byline</span><input type="text" data-path="site.author" placeholder="The Acme team"></label>
+    <label class="f"><span data-i18n="f_footer">Footer line</span><input type="text" data-path="site.footer_text"></label>
+    <label class="f full"><span data-i18n="f_home_h">Homepage headline</span><input type="text" data-path="site.home_headline"><small data-i18n="h_home">Used only when there's no static/index.html of your own. Your own homepage gets the latest articles injected between the PROOFPRESS:ARTICLES markers.</small></label>
+    <label class="f full"><span data-i18n="f_home_lede">Homepage intro</span><textarea data-path="site.home_lede" rows="2"></textarea></label>
+  </div>
+  <h2 data-i18n="brand_colors">Brand colours</h2>
+  <div class="card colors">
+    <label><input type="color" data-path="brand.primary"><span data-i18n="c_primary">Primary</span></label>
+    <label><input type="color" data-path="brand.accent"><span data-i18n="c_accent">Accent</span></label>
+    <label><input type="color" data-path="brand.background"><span data-i18n="c_bg">Background</span></label>
+    <label><input type="color" data-path="brand.text"><span data-i18n="c_text">Text</span></label>
+  </div>
+  <h2 data-i18n="cta">Call to action</h2>
+  <p class="sub" data-i18n="cta_sub">Shown at the end of every article and on the homepage. The first button is also the menu link.</p>
+  <div class="card grid">
+    <label class="f"><span data-i18n="f_cta_h">Heading</span><input type="text" data-path="cta.heading" placeholder="Try Acme free"></label>
+    <label class="f"><span data-i18n="f_cta_t">Text</span><input type="text" data-path="cta.text"></label>
+    <div class="full"><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_buttons">Buttons</span><div class="list" id="list-cta-buttons"></div></div>
+  </div>
+</section>
+
+<!-- PRODUCT -->
+<section class="tab" id="tab-product">
+  <h1 data-i18n="t_product">Product</h1>
+  <p class="sub" data-i18n="product_sub">The only source of truth for what articles may say about your product. Anything not listed is treated as not existing, so the writer can't invent features, prices or platforms.</p>
+  <div class="card grid">
+    <label class="f"><span data-i18n="f_p_name">Product name</span><input type="text" data-path="product.name"></label>
+    <label class="f"><span data-i18n="f_p_cat">Type</span>
+      <select data-path="product.category">
+        <option value="app">Mobile app</option><option value="saas">SaaS / web tool</option><option value="physical">Physical product</option>
+        <option value="service">Service</option><option value="content">Content / affiliate site</option><option value="other">Other</option>
+      </select></label>
+    <label class="f full"><span data-i18n="f_p_one">One-line description</span><input type="text" data-path="product.one_liner" placeholder="A watering reminder app for houseplants"></label>
+    <label class="f full"><span data-i18n="f_p_aud">Who it's for</span><input type="text" data-path="product.audience"></label>
+    <label class="f full"><span data-i18n="f_p_price">Pricing: exactly what articles may say</span><textarea data-path="product.pricing" rows="2" placeholder="Free to download, with an optional Plus subscription. Never state a price."></textarea></label>
+    <div class="full"><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_p_links">Official links (store pages, signup, website)</span><div class="list" id="list-product-links"></div></div>
+  </div>
+  <h2 data-i18n="p_features">What exists</h2>
+  <p class="sub" data-i18n="p_features_sub">One entry per feature. Use the tier field for plan or platform limits (Pro only, Android only, beta).</p>
+  <div class="card"><div class="list" id="list-product-features"></div></div>
+  <h2 data-i18n="p_notexist">What does NOT exist</h2>
+  <p class="sub" data-i18n="p_notexist_sub">Things readers or AI writers commonly assume your product does. This list stops the most damaging mistakes.</p>
+  <div class="card"><div class="list" id="list-product-not_exist"></div></div>
+  <h2 data-i18n="p_talk">How to talk about it</h2>
+  <div class="card grid">
+    <label class="f full"><span data-i18n="f_p_pos">Honest positioning: who it fits, who it doesn't</span><textarea data-path="product.positioning" rows="3"></textarea></label>
+    <label class="f full"><span data-i18n="f_p_disc">Disclosure line for lists and comparisons</span><input type="text" data-path="product.disclosure" placeholder="Full disclosure: we make Acme."></label>
+    <div class="full"><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_p_rules">Phrasing rules</span><div class="list" id="list-product-phrasing_rules"></div></div>
+    <label class="f full"><span data-i18n="f_p_extra">Anything else (Markdown)</span><textarea data-path="product.extra_markdown" rows="4"></textarea></label>
+    <label class="check full"><input type="checkbox" data-path="product.manual"><span><b data-i18n="manual">Manual mode</b> <small class="hint" data-i18n="manual_h">Stop regenerating context/product.md so you can edit that file by hand.</small></span></label>
+  </div>
+  <button class="btn" data-preview="product.md" data-i18n="preview">Preview generated file</button>
+  <pre data-preview-out="product.md" hidden></pre>
+</section>
+
+<!-- KEYWORDS -->
+<section class="tab" id="tab-keywords">
+  <h1 data-i18n="t_keywords">Keywords</h1>
+  <p class="sub" data-i18n="kw_sub">The writer only ever picks topics from this list, highest priority first. Rows that share a cluster become one article, not several competing pages.</p>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="kw_format">CSV format</h2>
+    <pre>keyword,cluster,priority,intent_hint,status,slug,published_at,notes
+best plant watering app,apps,1,buying guide,todo,,,"secondaries: plant care app"
+plant watering schedule template,schedules,1,list (download),todo,,,
+how often to water succulents,care,2,how-to,todo,,,</pre>
+    <ul class="hint" style="margin:10px 0 0;padding-left:18px">
+      <li data-i18n="kw_f1">keyword: required, the exact search phrase. Header row required; only "keyword" is mandatory.</li>
+      <li data-i18n="kw_f2">priority: 1 (highest) to 3. intent_hint: buying guide, comparison, how-to, definition, troubleshooting, list, list (download).</li>
+      <li data-i18n="kw_f3">status: todo, drafting, approved, published, blocked, skip. Leave slug and published_at empty; the pipeline fills them.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="kw_import">Import</h2>
+    <textarea id="kwPaste" rows="4" placeholder="Paste CSV here, or choose a file"></textarea>
+    <div class="row-actions" style="margin-top:10px">
+      <input type="file" id="kwFile" accept=".csv,text/csv">
+      <button class="btn small" id="kwAppend" data-i18n="kw_append">Add to list</button>
+      <button class="btn small danger" id="kwReplace" data-i18n="kw_replace">Replace list</button>
+    </div>
+  </div>
+  <div class="row-actions">
+    <button class="btn small" id="kwAdd" data-i18n="kw_add">+ Add keyword</button>
+    <select id="kwFilter" style="width:auto"><option value="" data-i18n="all">All statuses</option></select>
+    <button class="btn small" id="kwDownload" data-i18n="kw_download">Download CSV</button>
+    <span class="pill" id="kwCount"></span>
+  </div>
+  <div class="callout err" id="kwError" hidden></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>keyword</th><th>cluster</th><th>priority</th><th>intent_hint</th><th>status</th><th>slug</th><th>published_at</th><th>notes</th><th></th></tr></thead>
+    <tbody id="kwBody"></tbody>
+  </table></div>
+</section>
+
+<!-- VOICE -->
+<section class="tab" id="tab-voice">
+  <h1 data-i18n="t_voice">Audience &amp; voice</h1>
+  <p class="sub" data-i18n="voice_sub">Who reads the articles and how they should sound. Specific beats general: name the reader's job, situation and vocabulary.</p>
+  <div class="card grid">
+    <label class="f full"><span data-i18n="f_v_aud">Reader</span><textarea data-path="voice.audience" rows="2" placeholder="Servers and bartenders in the US, reading on a phone after a shift"></textarea></label>
+    <label class="f full"><span data-i18n="f_v_tone">Tone</span><input type="text" data-path="voice.tone" placeholder="A coworker on the closing shift: direct, a little dry, practical"></label>
+    <div><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_v_do">Do</span><div class="list" id="list-voice-do"></div></div>
+    <div><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_v_dont">Don't</span><div class="list" id="list-voice-dont"></div></div>
+    <label class="f full"><span data-i18n="f_v_ex">A paragraph in the right voice (optional)</span><textarea data-path="voice.example" rows="4"></textarea></label>
+    <label class="check full"><input type="checkbox" data-path="voice.manual"><span><b data-i18n="manual">Manual mode</b> <small class="hint" data-i18n="manual_hv">Stop regenerating context/voice.md.</small></span></label>
+  </div>
+  <button class="btn" data-preview="voice.md" data-i18n="preview">Preview generated file</button>
+  <pre data-preview-out="voice.md" hidden></pre>
+</section>
+
+<!-- FACT CHECK -->
+<section class="tab" id="tab-facts">
+  <h1 data-i18n="t_facts">Fact-check</h1>
+  <p class="sub" data-i18n="facts_sub">Which claims must be verified live against which sources. A claim that can't be verified during the run is left out.</p>
+  <div class="card grid">
+    <label class="check full"><input type="checkbox" data-path="factcheck.ymyl"><span><b data-i18n="f_ymyl">This site covers money, health, legal or safety topics (YMYL)</b> <small class="hint" data-i18n="h_ymyl">Turns on the strict rule: unverifiable claims are a hard fail.</small></span></label>
+    <label class="f full"><span data-i18n="f_topics">Claims that must be verified</span><textarea data-path="factcheck.topics" rows="3" placeholder="Taxes, reporting thresholds, minimum wage, form numbers, dates, prices of other products"></textarea></label>
+    <div class="full"><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_sources">Approved sources</span><div class="list" id="list-factcheck-sources"></div></div>
+    <label class="f full"><span data-i18n="f_rules">Extra rules</span><textarea data-path="factcheck.rules" rows="3" placeholder="Don't mix countries in one sentence. State the tax year a threshold applies to."></textarea></label>
+    <label class="f full"><span data-i18n="f_disclaimer">Disclaimer for affected articles</span><input type="text" data-path="factcheck.disclaimer" placeholder="This is general information, not tax advice."></label>
+    <label class="check full"><input type="checkbox" data-path="factcheck.manual"><span><b data-i18n="manual">Manual mode</b> <small class="hint" data-i18n="manual_hf">Stop regenerating context/factcheck.md.</small></span></label>
+  </div>
+  <button class="btn" data-preview="factcheck.md" data-i18n="preview">Preview generated file</button>
+  <pre data-preview-out="factcheck.md" hidden></pre>
+</section>
+
+<!-- PUBLISH -->
+<section class="tab" id="tab-publish">
+  <h1 data-i18n="t_publish">Publishing</h1>
+  <p class="sub" data-i18n="pub_sub">Where approved articles go. Secrets (tokens, passwords) are never saved here: set them as environment variables in the terminal that runs ProofPress or your agent.</p>
+  <div class="seg" id="modeSeg">
+    <button data-mode="site" data-i18n="mode_site">Build a new static site</button>
+    <button data-mode="existing" data-i18n="mode_existing">Add to my existing site</button>
+  </div>
+
+  <div data-when="publish.mode=site">
+    <div class="card grid">
+      <label class="f full"><span data-i18n="f_provider">Host</span>
+        <select data-path="publish.site_provider">
+          <option value="none">None yet (build only, upload public/ yourself)</option>
+          <option value="s3">AWS S3 + CloudFront</option>
+          <option value="cloudflare">Cloudflare Pages (direct upload)</option>
+          <option value="netlify">Netlify (direct upload)</option>
+          <option value="vercel">Vercel (direct upload)</option>
+          <option value="git">Git repo (host deploys on push: Cloudflare Pages, Netlify, Vercel, GitHub Pages)</option>
+        </select></label>
+      <div class="full" data-when="publish.site_provider=s3"><div class="grid">
+        <label class="f"><span>S3 bucket</span><input type="text" data-path="publish.s3.bucket"></label>
+        <label class="f"><span>CloudFront distribution ID</span><input type="text" data-path="publish.s3.cloudfront_distribution_id"></label>
+        <label class="f"><span>AWS CLI profile</span><input type="text" data-path="publish.s3.aws_profile"></label>
+      </div><p class="hint" data-i18n="h_s3">One-time setup (private bucket + CloudFront OAC + a viewer-request function that maps /path/ to /path/index.html) is in docs/deploy.md.</p></div>
+      <div class="full" data-when="publish.site_provider=cloudflare"><label class="f"><span>Cloudflare Pages project name</span><input type="text" data-path="publish.cloudflare.project_name"></label></div>
+      <div class="full" data-when="publish.site_provider=netlify"><label class="f"><span>Netlify site ID</span><input type="text" data-path="publish.netlify.site_id"><small>Site configuration &gt; Site details &gt; Site ID</small></label></div>
+      <div class="full" data-when="publish.site_provider=vercel"><label class="f"><span>Vercel team scope (optional)</span><input type="text" data-path="publish.vercel.scope"></label></div>
+      <div class="full" data-when="publish.site_provider=git"><div class="grid">
+        <label class="f"><span data-i18n="f_repo">Local repo folder</span><input type="text" data-path="publish.git.repo_path" placeholder="~/code/my-site"></label>
+        <label class="f"><span data-i18n="f_subdir">Folder inside the repo (empty = root)</span><input type="text" data-path="publish.git.subdir" placeholder="docs"></label>
+        <label class="f"><span data-i18n="f_branch">Branch to push (empty = current)</span><input type="text" data-path="publish.git.branch"></label>
+        <label class="check"><input type="checkbox" data-path="publish.git.push"><span data-i18n="f_push">Push after commit</span></label>
+      </div><p class="hint" data-i18n="h_git">Only files from earlier ProofPress builds are ever removed from the repo.</p></div>
+    </div>
+  </div>
+
+  <div data-when="publish.mode=existing">
+    <div class="card grid">
+      <label class="f full"><span data-i18n="f_target">My site runs on</span>
+        <select data-path="publish.existing_target">
+          <option value="markdown-repo">A Markdown repo (Astro, Hugo, Next.js, Eleventy, Jekyll...)</option>
+          <option value="wordpress">WordPress</option>
+          <option value="webhook">Something else (webhook: Zapier, Make, n8n, your own API)</option>
+        </select></label>
+      <div class="full" data-when="publish.existing_target=markdown-repo"><div class="grid">
+        <label class="f"><span data-i18n="f_repo">Local repo folder</span><input type="text" data-path="publish.markdown_repo.repo_path" placeholder="~/code/my-astro-site"></label>
+        <label class="f"><span data-i18n="f_content_dir">Content folder</span><input type="text" data-path="publish.markdown_repo.content_dir" placeholder="src/content/blog"></label>
+        <label class="f"><span data-i18n="f_fm">Frontmatter style</span>
+          <select data-path="publish.markdown_repo.frontmatter"><option value="astro">Astro (title, description, pubDate, heroImage)</option><option value="hugo">Hugo (title, description, date, lastmod, images)</option><option value="plain">Keep ProofPress fields</option></select></label>
+        <label class="f"><span data-i18n="f_layout">File layout</span>
+          <select data-path="publish.markdown_repo.file_layout"><option value="file">content/slug.md</option><option value="folder">content/slug/index.md</option></select></label>
+        <label class="f"><span data-i18n="f_imgdir">Image folder</span><input type="text" data-path="publish.markdown_repo.image_dir" placeholder="public/images/blog"></label>
+        <label class="f"><span data-i18n="f_imgurl">Image URL prefix</span><input type="text" data-path="publish.markdown_repo.image_url_prefix" placeholder="/images/blog"></label>
+        <label class="check"><input type="checkbox" data-path="publish.markdown_repo.commit"><span data-i18n="f_commit">Git commit</span></label>
+        <label class="check"><input type="checkbox" data-path="publish.markdown_repo.push"><span data-i18n="f_push2">Git push (your host deploys on push)</span></label>
+      </div></div>
+      <div class="full" data-when="publish.existing_target=wordpress"><div class="grid">
+        <label class="f"><span>WordPress URL</span><input type="url" data-path="publish.wordpress.url" placeholder="https://blog.example.com"></label>
+        <label class="f"><span data-i18n="f_wpuser">Username</span><input type="text" data-path="publish.wordpress.username"></label>
+        <label class="f"><span data-i18n="f_wpstatus">Post status</span><select data-path="publish.wordpress.status"><option value="draft">draft (review in WordPress first)</option><option value="publish">publish</option><option value="pending">pending review</option></select></label>
+      </div></div>
+      <div class="full" data-when="publish.existing_target=webhook"><label class="f"><span>Webhook URL</span><input type="url" data-path="publish.webhook.url"><small data-i18n="h_hook">Receives JSON: slug, title, meta_description, markdown, html, frontmatter, jsonld, hero image (base64).</small></label></div>
+    </div>
+  </div>
+
+  <div class="callout info" id="secretHint"></div>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="pub_test">Try it</h2>
+    <p class="hint" data-i18n="pub_test_h">Save first. Dry run prints the exact commands or requests without uploading anything.</p>
+    <div class="row-actions">
+      <button class="btn small" data-action="build" data-i18n="a_build">Build site</button>
+      <button class="btn small" data-action="publish-dry" data-i18n="a_dry">Dry run</button>
+      <button class="btn small primary" data-action="publish" data-i18n="a_pub">Publish now</button>
+    </div>
+    <pre id="actionLog" hidden></pre>
+  </div>
+</section>
+
+<!-- QUALITY -->
+<section class="tab" id="tab-quality">
+  <h1 data-i18n="t_quality">Quality gate</h1>
+  <p class="sub" data-i18n="q_sub">Every draft is scored on a 100-point rubric by a reviewer that didn't write it. Hard fails (invented product claims, unverified YMYL claims, made-up stats, wrong intent, scanner failures) fail the draft regardless of score.</p>
+  <div class="card grid">
+    <label class="f"><span data-i18n="f_pass">Pass mark (out of 100)</span><input type="number" min="50" max="100" data-path="quality.pass_mark" data-num></label>
+    <label class="f"><span data-i18n="f_rewrites">Max rewrites before handing back to you</span><input type="number" min="0" max="5" data-path="quality.max_rewrites" data-num></label>
+    <div class="full"><span class="hint" style="font-weight:600;color:var(--ink)" data-i18n="f_banned">Extra banned phrases (any language)</span><div class="list" id="list-quality-extra_banned_phrases"></div></div>
+  </div>
+</section>
+
+</main>
+</div>
+<div id="toast"></div>
+<script>
+"use strict";
+const TOKEN = "__PP_TOKEN__";
+let S = null, BL = [], META = null, dirty = false, lang = "en";
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+
+const ZH = {
+  unsaved:"有未保存的修改", save:"保存", t_overview:"总览", t_site:"站点与品牌", t_product:"产品定义", t_keywords:"关键词库",
+  t_voice:"读者与文风", t_facts:"事实核查", t_publish:"发布方式", t_quality:"质量闸门",
+  ov_sub:"先填完左侧各页并保存，然后让你的 AI agent 写下一篇文章。红色项会阻止写作，黄色项建议修复。",
+  ov_backlog:"关键词进度", ov_run:"运行流水线", ov_run_hint:"在 Claude Code（或任何装了 ProofPress skill / MCP 的 agent）里说：", ov_articles:"已通过的文章",
+  site_sub:"文章放在哪里、页面长什么样。如果选择“加入已有网站”，这里只需要站点名、网址、语言和博客路径。",
+  f_site_name:"站点名称", f_base_url:"站点网址", h_base_url:"最终的 https:// 域名，结尾不要斜杠。canonical 和 sitemap 都依赖它。",
+  f_language:"文章语言", h_language:"去 AI 味的词表只对英文生效；段落长度、破折号、关键词堆砌等结构检查对所有语言生效。",
+  f_spelling:"英文拼写", f_blog_path:"博客路径", h_blog_path:"文章地址是 /博客路径/slug/。加入已有网站时必须和你网站的路径一致。",
+  f_blog_label:"菜单里的博客名称", f_author:"作者署名", f_footer:"页脚文字", f_home_h:"首页标题",
+  h_home:"只有在你没有提供 static/index.html 时才会用来生成首页。自定义首页会在 PROOFPRESS:ARTICLES 标记之间自动插入最新文章。",
+  f_home_lede:"首页简介", brand_colors:"品牌颜色", c_primary:"主色", c_accent:"强调色", c_bg:"背景", c_text:"文字",
+  cta:"行动号召（CTA）", cta_sub:"显示在每篇文章末尾和首页。第一个按钮同时会出现在顶部菜单。", f_cta_h:"标题", f_cta_t:"文字", f_buttons:"按钮",
+  product_sub:"文章提到产品时唯一的事实来源。没列出的功能一律视为不存在，所以写作者没法编造功能、价格或平台。",
+  f_p_name:"产品名称", f_p_cat:"类型", f_p_one:"一句话介绍", f_p_aud:"目标用户", f_p_price:"价格：文章只能这样说",
+  f_p_links:"官方链接（应用商店、注册页、官网）", p_features:"已有功能", p_features_sub:"每个功能一条。套餐或平台限制写在“限制”里（仅 Pro、仅安卓、测试中）。",
+  p_notexist:"不存在的功能", p_notexist_sub:"读者或 AI 常以为你的产品有、但其实没有的东西。这张清单能挡住最伤信誉的错误。",
+  p_talk:"如何介绍产品", f_p_pos:"诚实定位：适合谁、不适合谁", f_p_disc:"榜单和对比文里的利益披露", f_p_rules:"措辞规则", f_p_extra:"其他补充（Markdown）",
+  manual:"手动模式", manual_h:"不再自动生成 context/product.md，方便你直接手改那个文件。", manual_hv:"不再自动生成 context/voice.md。", manual_hf:"不再自动生成 context/factcheck.md。",
+  preview:"预览生成的文件",
+  kw_sub:"写作者只会从这张表里挑选题，按优先级从高到低。同一个 cluster 的多行会合成一篇文章，避免自己和自己抢排名。",
+  kw_format:"CSV 格式", kw_f1:"keyword：必填，精确的搜索词。必须有表头行，只有 keyword 这一列是必需的。",
+  kw_f2:"priority：1（最高）到 3。intent_hint：buying guide、comparison、how-to、definition、troubleshooting、list、list (download)。",
+  kw_f3:"status：todo、drafting、approved、published、blocked、skip。slug 和 published_at 留空，流水线会自动填。",
+  kw_import:"导入", kw_append:"追加到列表", kw_replace:"替换整个列表", kw_add:"+ 添加关键词", all:"全部状态", kw_download:"下载 CSV",
+  voice_sub:"谁在读这些文章、应该用什么口吻。越具体越好：写清读者的职业、处境和常用说法。",
+  f_v_aud:"读者", f_v_tone:"语气", f_v_do:"要这样写", f_v_dont:"不要这样写", f_v_ex:"一段示范文字（可选）",
+  facts_sub:"哪些说法必须在写作当下对照哪些来源核实。当场核实不了的说法一律删掉。",
+  f_ymyl:"本站涉及钱、健康、法律或安全（YMYL）", h_ymyl:"开启严格规则：无法核实的说法直接判不合格。", f_topics:"必须核实的说法",
+  f_sources:"认可的来源", f_rules:"额外规则", f_disclaimer:"相关文章末尾的免责声明",
+  pub_sub:"通过审核的文章发到哪里。密钥（token、密码）不会保存在这里，请在运行 ProofPress 或 agent 的终端里设置成环境变量。",
+  mode_site:"生成一个新的静态站", mode_existing:"加入我已有的网站", f_provider:"托管平台",
+  h_s3:"一次性配置（私有 bucket + CloudFront OAC + 把 /path/ 映射到 /path/index.html 的 viewer-request 函数）见 docs/deploy.md。",
+  f_repo:"本地仓库文件夹", f_subdir:"仓库内的文件夹（留空为根目录）", f_branch:"推送的分支（留空为当前分支）", f_push:"提交后推送",
+  h_git:"只会删除之前由 ProofPress 生成的文件，你仓库里的其他文件不会动。",
+  f_target:"我的网站是", f_content_dir:"文章目录", f_fm:"Frontmatter 格式", f_layout:"文件结构", f_imgdir:"图片目录", f_imgurl:"图片 URL 前缀",
+  f_commit:"Git 提交", f_push2:"Git 推送（托管平台收到推送后自动部署）", f_wpuser:"用户名", f_wpstatus:"文章状态",
+  h_hook:"会收到 JSON：slug、title、meta_description、markdown、html、frontmatter、jsonld、封面图（base64）。",
+  pub_test:"试一下", pub_test_h:"先保存。Dry run 只打印将要执行的命令或请求，不会上传任何东西。", a_build:"生成站点", a_dry:"Dry run", a_pub:"立即发布",
+  q_sub:"每篇草稿都由一个没参与写作的评审按 100 分制打分。触发硬性不合格（编造产品功能、YMYL 说法未核实、捏造数据、搜索意图不对、扫描器报错）的草稿，分数再高也不通过。",
+  f_pass:"及格线（满分 100）", f_rewrites:"最多重写几次，之后交还给你", f_banned:"额外禁用的词句（任何语言）",
+  add:"+ 添加", remove:"删除", none_yet:"还没有内容。",
+  saved:"已保存", save_failed:"保存失败", must_save:"请先保存再预览", imported:"已导入 {n} 行",
+  errors:"必须修复", warnings:"建议修复", all_good:"设置完整，可以开始写作。", next_kw:"下一篇：", no_next:"关键词库里没有待写（todo）的关键词。",
+  no_articles:"还没有通过审核的文章。", secrets_need:"这个发布方式需要的密钥（环境变量）："
+};
+const EN_MSG = {
+  add:"+ Add", remove:"Remove", none_yet:"Nothing yet.", saved:"Saved", save_failed:"Save failed", must_save:"Save first, then preview",
+  imported:"Imported {n} rows", errors:"Must fix", warnings:"Worth fixing", all_good:"Settings are complete. Ready to write.",
+  next_kw:"Next up: ", no_next:"No 'todo' keywords in the backlog.", no_articles:"No approved articles yet.", secrets_need:"Secret this target needs (environment variable): "
+};
+function tr(k, vars) { let s = (lang === "zh" ? ZH[k] : EN_MSG[k]) || EN_MSG[k] || k; for (const [a, b] of Object.entries(vars || {})) s = s.replace("{" + a + "}", b); return s; }
+
+function applyLang() {
+  try { localStorage.setItem("pp_lang", lang); } catch (e) {}
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  $("#langBtn").textContent = lang === "zh" ? "English" : "中文";
+  $$("[data-i18n]").forEach(el => {
+    if (el.dataset.en === undefined) el.dataset.en = el.textContent;
+    el.textContent = lang === "zh" && ZH[el.dataset.i18n] ? ZH[el.dataset.i18n] : el.dataset.en;
+  });
+  renderAll();
+}
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200); }
+async function api(path, body) {
+  const opt = { headers: { "X-ProofPress-Token": TOKEN } };
+  if (body !== undefined) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt);
+  const ct = r.headers.get("Content-Type") || "";
+  const data = ct.includes("json") ? await r.json() : await r.text();
+  if (!r.ok) throw new Error((data && data.error) || data || r.statusText);
+  return data;
+}
+function getPath(o, p) { return p.split(".").reduce((a, k) => (a == null ? a : a[k]), o); }
+function setPath(o, p, v) { const ks = p.split("."); let a = o; ks.slice(0, -1).forEach(k => { if (a[k] == null) a[k] = {}; a = a[k]; }); a[ks[ks.length - 1]] = v; }
+function markDirty() { dirty = true; $("#dirty").hidden = false; }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+/* ---------- simple bound fields ---------- */
+function bindFields() {
+  $$("[data-path]").forEach(el => {
+    const p = el.dataset.path, v = getPath(S, p);
+    if (el.type === "checkbox") el.checked = !!v;
+    else el.value = v == null ? "" : v;
+    if (el._bound) return;
+    el._bound = true;
+    el.addEventListener(el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color" ? "change" : "input", () => {
+      let val = el.type === "checkbox" ? el.checked : el.value;
+      if (el.dataset.num !== undefined) val = Number(val);
+      setPath(S, p, val); markDirty(); updateWhen();
+      if (p === "publish.existing_target" || p === "publish.site_provider") renderSecretHint();
+    });
+  });
+}
+function updateWhen() {
+  $$("[data-when]").forEach(el => { const [p, v] = el.dataset.when.split("="); el.hidden = String(getPath(S, p)) !== v; });
+  $$("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === S.publish.mode));
+}
+
+/* ---------- list editors ---------- */
+const LISTS = {
+  "cta.buttons": [{ k: "label", ph: "Button label" }, { k: "url", ph: "https://..." }],
+  "product.links": [{ k: "label", ph: "Google Play / App Store / Website" }, { k: "url", ph: "https://..." }],
+  "product.features": [{ k: "name", lb: "Feature", lbz: "功能", ph: "Watering reminders" }, { k: "tier", lb: "Limits (optional)", lbz: "限制（可选）", ph: "Free / Pro only / Android only / beta" }, { k: "detail", lb: "What it does, specifically", lbz: "具体做什么", ph: "Per-plant schedules with push notifications", ta: true }, { k: "notes", lb: "Notes for the writer (optional)", lbz: "给写作者的备注（可选）", ph: "" }],
+  "product.not_exist": null,
+  "product.phrasing_rules": null,
+  "voice.do": null, "voice.dont": null,
+  "factcheck.sources": [{ k: "name", lb: "Source", lbz: "来源", ph: "IRS.gov" }, { k: "url", lb: "URL", lbz: "网址", ph: "https://www.irs.gov/..." }, { k: "scope", lb: "Use for (optional)", lbz: "用于（可选）", ph: "US tip reporting rules" }],
+  "quality.extra_banned_phrases": null,
+};
+const LIST_PH = {
+  "product.not_exist": "e.g. No bank sync: users enter numbers themselves",
+  "product.phrasing_rules": "e.g. Don't claim timing (\"in 10 seconds\")",
+  "voice.do": "e.g. Use worked examples with obviously illustrative numbers",
+  "voice.dont": "e.g. No fake personal stories or testimonials",
+  "quality.extra_banned_phrases": "e.g. best-kept secret",
+};
+function renderList(path) {
+  const el = document.getElementById("list-" + path.replace(".", "-"));
+  if (!el) return;
+  const fields = LISTS[path];
+  let arr = getPath(S, path);
+  if (!Array.isArray(arr)) { arr = []; setPath(S, path, arr); }
+  el.innerHTML = "";
+  if (!arr.length) el.insertAdjacentHTML("beforeend", `<p class="empty">${esc(tr("none_yet"))}</p>`);
+  arr.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "item" + (fields && fields.length > 2 ? " boxed" : "");
+    const box = document.createElement("div");
+    box.className = "fields";
+    if (fields && fields.length === 2) box.style.gridTemplateColumns = "1fr 2fr";
+    (fields || [{ k: null, ph: LIST_PH[path] || "" }]).forEach(f => {
+      const inp = document.createElement(f.ta ? "textarea" : "input");
+      if (!f.ta) inp.type = "text"; else inp.rows = 2;
+      inp.placeholder = f.ph || "";
+      inp.value = f.k ? (item[f.k] || "") : (item || "");
+      inp.addEventListener("input", () => { if (f.k) arr[i][f.k] = inp.value; else arr[i] = inp.value; markDirty(); });
+      if (f.lb) { const w = document.createElement("label"); w.className = "f"; const sp = document.createElement("span"); sp.textContent = lang === "zh" ? f.lbz : f.lb; w.append(sp, inp); box.appendChild(w); }
+      else box.appendChild(inp);
+    });
+    const del = document.createElement("button");
+    del.className = "btn small ghost danger"; del.textContent = "✕"; del.title = tr("remove");
+    del.addEventListener("click", () => { arr.splice(i, 1); markDirty(); renderList(path); });
+    row.append(box, del);
+    el.appendChild(row);
+  });
+  const add = document.createElement("button");
+  add.className = "btn small"; add.textContent = tr("add");
+  add.addEventListener("click", () => { arr.push(fields ? Object.fromEntries(fields.map(f => [f.k, ""])) : ""); markDirty(); renderList(path); const ins = $$("input,textarea", el); if (ins.length) ins[ins.length - (fields ? fields.length : 1)].focus(); });
+  el.appendChild(add);
+}
+
+/* ---------- backlog table ---------- */
+function renderBacklog() {
+  const f = $("#kwFilter").value, body = $("#kwBody");
+  body.innerHTML = "";
+  BL.forEach((r, i) => {
+    if (f && r.status !== f) return;
+    const tr_ = document.createElement("tr");
+    const cell = (k, cls, kind) => {
+      const td = document.createElement("td"); if (cls) td.className = cls;
+      let inp;
+      if (kind) {
+        inp = document.createElement("select");
+        const opts = kind === "priority" ? ["1", "2", "3"] : kind === "intent" ? [""].concat(META.intents) : META.statuses;
+        opts.forEach(o => { const op = document.createElement("option"); op.value = o; op.textContent = o || "—"; inp.appendChild(op); });
+      } else { inp = document.createElement("input"); inp.type = "text"; }
+      inp.value = r[k] || (kind === "priority" ? "2" : kind === "status" ? "todo" : "");
+      inp.addEventListener(kind ? "change" : "input", () => { r[k] = inp.value; markDirty(); if (k === "status") renderCounts(); });
+      td.appendChild(inp); tr_.appendChild(td);
+    };
+    cell("keyword", "kw"); cell("cluster", "cl"); cell("priority", "nar", "priority"); cell("intent_hint", "in", "intent");
+    cell("status", "st", "status"); cell("slug", "sl"); cell("published_at", "dt"); cell("notes", "notes");
+    const td = document.createElement("td");
+    const del = document.createElement("button"); del.className = "btn small ghost danger"; del.textContent = "✕";
+    del.addEventListener("click", () => { BL.splice(i, 1); markDirty(); renderBacklog(); });
+    td.appendChild(del); tr_.appendChild(td); body.appendChild(tr_);
+  });
+  renderCounts();
+}
+function renderCounts() { $("#kwCount").textContent = BL.length + " · todo " + BL.filter(r => (r.status || "todo") === "todo").length; }
+async function importCsv(replace) {
+  let text = $("#kwPaste").value.trim();
+  const file = $("#kwFile").files[0];
+  if (!text && file) text = await file.text();
+  if (!text) return;
+  try {
+    const res = await api("/api/backlog/parse", { csv: text });
+    if (replace) BL = res.rows;
+    else { const have = new Set(BL.map(r => r.keyword.toLowerCase())); res.rows.forEach(r => { if (!have.has(r.keyword.toLowerCase())) BL.push(r); }); }
+    $("#kwPaste").value = ""; $("#kwFile").value = ""; $("#kwError").hidden = true;
+    markDirty(); renderBacklog(); toast(tr("imported", { n: res.rows.length }));
+  } catch (e) { $("#kwError").textContent = e.message; $("#kwError").hidden = false; }
+}
+
+/* ---------- overview ---------- */
+let VAL = null, NEXT = null, ARTS = [];
+function renderOverview() {
+  if (!VAL) return;
+  const box = $("#ovChecks"); box.innerHTML = "";
+  if (VAL.errors.length) box.insertAdjacentHTML("beforeend", `<div class="callout err"><b>${esc(tr("errors"))}</b><ul>${VAL.errors.map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>`);
+  if (VAL.warnings.length) box.insertAdjacentHTML("beforeend", `<div class="callout warn"><b>${esc(tr("warnings"))}</b><ul>${VAL.warnings.map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>`);
+  if (!VAL.errors.length) box.insertAdjacentHTML("beforeend", `<div class="callout ok">${esc(tr("all_good"))} <span class="pill">${esc(VAL.publish_target)}</span></div>`);
+  const counts = {}; META.statuses.forEach(s => counts[s] = 0); BL.forEach(r => counts[r.status || "todo"]++);
+  $("#ovStats").innerHTML = META.statuses.filter(s => s !== "skip" || counts[s]).map(s => `<div class="stat"><b>${counts[s]}</b><span>${s}</span></div>`).join("");
+  $("#ovNext").textContent = NEXT ? tr("next_kw") + NEXT.keyword + (NEXT.intent_hint ? " (" + NEXT.intent_hint + ")" : "") : tr("no_next");
+  const proj = $("#proj").textContent;
+  $("#ovPrompts").textContent = lang === "zh"
+    ? `用 proofpress 给 ${proj} 写下一篇文章\n用 proofpress 写关键词 "${NEXT ? NEXT.keyword : "你的关键词"}" 的文章\n用 proofpress 发布 ${proj} 里已通过的文章`
+    : `Use proofpress to write the next article for ${proj}\nUse proofpress to write the article for "${NEXT ? NEXT.keyword : "your keyword"}"\nUse proofpress to publish the approved articles in ${proj}`;
+  $("#ovArticles").innerHTML = ARTS.length
+    ? "<ul style='margin:0;padding-left:18px'>" + ARTS.map(a => `<li>${esc(a.title || a.file)} <span class="pill">${esc(a.slug || a.error || "")}</span></li>`).join("") + "</ul>"
+    : `<p class="hint">${esc(tr("no_articles"))}</p>`;
+  const dots = { overview: VAL.errors.length ? "err" : VAL.warnings.length ? "warn" : "ok" };
+  const has = (re) => VAL.errors.some(e => re.test(e)) ? "err" : VAL.warnings.some(e => re.test(e)) ? "warn" : "";
+  dots.site = has(/site\.|CTA/); dots.product = has(/product/); dots.keywords = has(/backlog|keyword|intent_hint/);
+  dots.facts = has(/YMYL/); dots.publish = has(/publish/);
+  $$("[data-dot]").forEach(d => { d.className = "dot " + (dots[d.dataset.dot] || ""); });
+}
+function renderSecretHint() {
+  const key = S.publish.mode === "site" ? S.publish.site_provider : S.publish.existing_target;
+  const msg = META.secret_env[key];
+  const el = $("#secretHint"); el.hidden = !msg; if (msg) el.textContent = tr("secrets_need") + msg;
+}
+
+function renderAll() {
+  if (!S) return;
+  bindFields(); updateWhen();
+  Object.keys(LISTS).forEach(renderList);
+  renderBacklog(); renderOverview(); renderSecretHint();
+}
+
+function loadState(st) {
+  S = st.settings; BL = st.backlog; META = st.meta; VAL = st.validation; NEXT = st.next; ARTS = st.articles;
+  $("#proj").textContent = st.project;
+  const sel = $("#kwFilter");
+  if (sel.options.length === 1) META.statuses.forEach(s => { const o = document.createElement("option"); o.value = s; o.textContent = s; sel.appendChild(o); });
+  if (st.backlog_error) { $("#kwError").textContent = st.backlog_error; $("#kwError").hidden = false; }
+  dirty = false; $("#dirty").hidden = true;
+  renderAll();
+}
+async function save() {
+  try {
+    const st = await api("/api/settings", { settings: S, backlog: BL.filter(r => (r.keyword || "").trim()) });
+    loadState(st); toast(tr("saved"));
+  } catch (e) { toast(tr("save_failed") + ": " + e.message); }
+}
+
+/* ---------- tabs + wiring ---------- */
+function showTab(name) {
+  $$(".tab").forEach(t => t.classList.toggle("on", t.id === "tab-" + name));
+  $$("#side button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  try { history.replaceState(null, "", "#" + name); } catch (e) {}
+  window.scrollTo(0, 0);
+}
+$$("#side button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+$("#saveBtn").addEventListener("click", save);
+$("#langBtn").addEventListener("click", () => { lang = lang === "zh" ? "en" : "zh"; applyLang(); });
+document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); save(); } });
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+$$("#modeSeg button").forEach(b => b.addEventListener("click", () => { S.publish.mode = b.dataset.mode; markDirty(); updateWhen(); renderSecretHint(); }));
+$("#kwAdd").addEventListener("click", () => { BL.push({ keyword: "", cluster: "", priority: "2", intent_hint: "", status: "todo", slug: "", published_at: "", notes: "" }); $("#kwFilter").value = ""; markDirty(); renderBacklog(); const ins = $$("#kwBody td.kw input"); ins[ins.length - 1].focus(); });
+$("#kwFilter").addEventListener("change", renderBacklog);
+$("#kwAppend").addEventListener("click", () => importCsv(false));
+$("#kwReplace").addEventListener("click", () => importCsv(true));
+$("#kwDownload").addEventListener("click", async () => {
+  const text = await api("/api/backlog.csv");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" })); a.download = "backlog.csv"; a.click();
+});
+$$("[data-preview]").forEach(b => b.addEventListener("click", async () => {
+  const out = $(`[data-preview-out="${b.dataset.preview}"]`);
+  if (dirty) { toast(tr("must_save")); return; }
+  out.textContent = await api("/api/context/" + b.dataset.preview); out.hidden = false;
+}));
+$$("[data-action]").forEach(b => b.addEventListener("click", async () => {
+  const log = $("#actionLog"); log.hidden = false;
+  if (dirty) { log.textContent = tr("must_save"); return; }
+  log.textContent = "…";
+  $$("[data-action]").forEach(x => x.disabled = true);
+  try { const r = await api("/api/action", { action: b.dataset.action }); log.textContent = r.log.join("\n"); }
+  catch (e) { log.textContent = e.message; }
+  finally { $$("[data-action]").forEach(x => x.disabled = false); }
+  try { loadState(await api("/api/state")); } catch (e) {}
+}));
+
+(async function init() {
+  try { lang = localStorage.getItem("pp_lang") || ((navigator.language || "").startsWith("zh") ? "zh" : "en"); } catch (e) { lang = "en"; }
+  loadState(await api("/api/state"));
+  applyLang();
+  const h = (location.hash || "").slice(1);
+  showTab(document.getElementById("tab-" + h) ? h : "overview");
+})();
+</script>
+</body>
+</html>

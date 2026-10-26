@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "site": {
+    "name": "Leafnote",
+    "base_url": "https://leafnote.example.com",
+    "language": "en",
+    "spelling": "US",
+    "blog_path": "blog",
+    "blog_label": "Plant care guides",
+    "author": "The Leafnote team",
+    "home_headline": "Stop guessing when to water",
+    "home_lede": "Leafnote is a watering reminder app for houseplants. This is a fictional demo project for ProofPress.",
+    "footer_text": "Leafnote is a fictional app used to demo ProofPress."
+  },
+  "brand": {
+    "primary": "#2F5D50",
+    "accent": "#E3B04B",
+    "background": "#F7F5EF",
+    "text": "#1E2420"
+  },
+  "cta": {
+    "heading": "Get watering reminders with Leafnote",
+    "text": "Set a schedule per plant and get a reminder on the day it's due.",
+    "buttons": [
+      {
+        "label": "Get Leafnote on Google Play",
+        "url": "https://play.google.com/store/apps/details?id=example.leafnote"
+      }
+    ]
+  },
+  "quality": {
+    "pass_mark": 80,
+    "max_rewrites": 2,
+    "extra_banned_phrases": []
+  },
+  "product": {
+    "manual": false,
+    "name": "Leafnote",
+    "one_liner": "A watering reminder app for houseplants",
+    "category": "app",
+    "audience": "People with 5 to 50 houseplants who keep forgetting which plant needs water",
+    "links": [
+      {
+        "label": "Google Play",
+        "url": "https://play.google.com/store/apps/details?id=example.leafnote"
+      }
+    ],
+    "pricing": "Free to download, with an optional Plus subscription. Never state a price.",
+    "features": [
+      {
+        "name": "Per-plant watering schedules",
+        "detail": "Each plant gets its own interval in days; the app reminds you on the day it's due.",
+        "tier": "Free",
+        "notes": ""
+      },
+      {
+        "name": "Snooze and skip",
+        "detail": "Push a reminder by one to three days, or skip it if the soil is still wet.",
+        "tier": "Free",
+        "notes": ""
+      },
+      {
+        "name": "Watering log",
+        "detail": "Every watering is logged with the date, so you can see the real interval over time.",
+        "tier": "Free",
+        "notes": ""
+      },
+      {
+        "name": "Seasonal adjustment",
+        "detail": "Lengthen all intervals by a percentage for winter with one setting.",
+        "tier": "Plus",
+        "notes": ""
+      },
+      {
+        "name": "CSV export",
+        "detail": "Export the watering log as a CSV file.",
+        "tier": "Plus",
+        "notes": ""
+      }
+    ],
+    "not_exist": [
+      "No plant identification from photos",
+      "No disease or pest diagnosis",
+      "No soil moisture sensor support",
+      "No iPhone version (Android only)",
+      "No sharing with other household members"
+    ],
+    "positioning": "Leafnote fits someone with enough plants that a calendar gets messy. Someone with three plants is fine with a phone calendar; someone who wants plant ID or diagnosis needs a different app.",
+    "disclosure": "Full disclosure: we make Leafnote.",
+    "phrasing_rules": [
+      "Don't promise plants will survive or thrive",
+      "No timing claims like 'set up in 30 seconds'"
+    ],
+    "extra_markdown": ""
+  },
+  "voice": {
+    "manual": false,
+    "audience": "Houseplant owners reading on a phone, mostly beginners to intermediate",
+    "tone": "A friend who keeps a lot of plants: practical, calm, a little dry",
+    "do": [
+      "Use worked examples with obviously illustrative numbers",
+      "Say when the answer is 'it depends' and on what"
+    ],
+    "dont": [
+      "No fake personal stories or testimonials",
+      "No guilt about dead plants"
+    ],
+    "example": ""
+  },
+  "factcheck": {
+    "manual": false,
+    "ymyl": false,
+    "topics": "Toxicity of plants to pets or children; any claim about plant species' needs that goes beyond common care-guide consensus.",
+    "sources": [
+      {
+        "name": "ASPCA toxic and non-toxic plants list",
+        "url": "https://www.aspca.org/pet-care/animal-poison-control/toxic-and-non-toxic-plants",
+        "scope": "pet toxicity"
+      },
+      {
+        "name": "University extension services (.edu)",
+        "url": "https://extension.umn.edu/",
+        "scope": "species care requirements"
+      }
+    ],
+    "disclaimer": "",
+    "rules": "Name the specific plant when giving watering advice; never give one interval for 'all plants'."
+  },
+  "publish": {
+    "mode": "site",
+    "site_provider": "none",
+    "s3": {
+      "bucket": "",
+      "cloudfront_distribution_id": "",
+      "aws_profile": "default"
+    },
+    "cloudflare": {
+      "project_name": ""
+    },
+    "netlify": {
+      "site_id": ""
+    },
+    "vercel": {
+      "scope": ""
+    },
+    "git": {
+      "repo_path": "",
+      "subdir": "",
+      "branch": "",
+      "push": true
+    },
+    "existing_target": "markdown-repo",
+    "markdown_repo": {
+      "repo_path": "",
+      "content_dir": "src/content/blog",
+      "file_layout": "file",
+      "frontmatter": "astro",
+      "image_dir": "public/images/blog",
+      "image_url_prefix": "/images/blog",
+      "commit": true,
+      "push": false
+    },
+    "wordpress": {
+      "url": "",
+      "username": "",
+      "status": "draft"
+    },
+    "webhook": {
+      "url": ""
+    }
+  }
+}
